@@ -1,0 +1,30 @@
+{
+  "name": "oke-front-mcp",
+  "version": "0.1.0",
+  "description": "프론트엔드 개발 통합 MCP 서버 - Figma, 퍼블 레포, Confluence, Ant Vue 통합",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "test:figma": "node test-figma.js",
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "figma",
+    "frontend",
+    "development"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "axios": "^1.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2",
+    "tsx": "^4.19.2"
+  }
+}
