@@ -1,3 +1,28 @@
-# Environment variables
+# 환경 변수 (사용 안 함 - Cursor Settings에서 관리)
 .env
-.env.locals
+.env.local
+
+# 의존성
+node_modules/
+
+# 빌드 결과물
+dist/
+
+# 로그
+*.log
+npm-debug.log*
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# IDE 설정 (Cursor 제외)
+.vscode/
+.idea/
+
+# 메타데이터 (로컬에서 생성)
+data/screen-index.json
+
+# 임시 파일
+*.tmp
+*.temp

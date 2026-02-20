@@ -1,137 +1,295 @@
-# Figma API 테스트 가이드
+# oke-front-mcp
 
-## 🎯 목표
-"콘트라베이스 3.0.6 로드밸런서 새로 추가되는 기능" 같은 자연어 명령으로 Figma에서 기획서를 가져올 수 있는지 확인합니다.
+**프론트엔드 개발 통합 MCP 서버**
 
-## 📋 준비사항
+Figma 기획서를 Cursor에서 자연어로 검색하는 MCP 서버입니다.
 
-### 1. Node.js 설치 확인
+---
+
+## 🎯 주요 기능
+
+- ✅ **화면 ID 직접 조회**: `CONT-05_04_54 보여줘`
+- ✅ **자연어 검색**: `콘트라베이스 3.0.6 로드밸런서 모니터링`
+- ✅ **자동 후보 제시**: 여러 결과가 있을 때 후보 목록 표시 (프로젝트/버전별 그룹화)
+- ✅ **경량화된 메타데이터 수집**: 5-10분 만에 3,000+ 화면 수집 (기존 30분+)
+- ✅ **지연 로딩 (Lazy Loading)**: 검색 시 필요한 상세 정보만 조회
+- ✅ **Figma API Fallback**: 메타데이터에 없는 최신 화면도 실시간 검색
+- ✅ **자동 학습**: 한 번 찾은 화면은 다음부터 빠르게 검색
+
+---
+
+## 🚀 빠른 시작
+
+### 1. 설치
+
 ```bash
-node --version  # v18 이상 권장
-```
+# 저장소 클론
+git clone <repository-url>
+cd oke-front-mcp
 
-### 2. 의존성 설치
-```bash
-cd /Users/taeheerho/Desktop/oke-front-mcp
+# 의존성 설치 및 빌드
 npm install
+npm run build
 ```
 
-### 3. Figma Personal Access Token 발급
-`FIGMA_TOKEN_SETUP.md` 파일을 참고하여 토큰을 발급받으세요.
+### 2. Figma Token 발급
 
-### 4. 환경변수 설정
+1. https://www.figma.com/ 로그인
+2. Settings → Personal access tokens
+3. "Generate new token" (Scopes: File content, Read comments, Read file/project info)
+4. 토큰 복사
+
+### 3. Cursor 연동
+
+`~/.cursor/mcp.json` 파일에 추가:
+
+**✅ 모든 환경변수는 Cursor settings에서만 관리합니다.**  
+**❌ `.env` 파일은 사용하지 않습니다!**
+
+```json
+{
+  "mcpServers": {
+    "oke-front-mcp": {
+      "command": "node",
+      "args": ["/Users/당신의사용자명/Desktop/oke-front-mcp/dist/index.js"],
+      "env": {
+        "FIGMA_TOKEN": "여기에_발급받은_토큰",
+        "FIGMA_TEAM_ID": "1498602828936104321",
+        "DEFAULT_PROJECT": "CONTRABASS",
+        "DEFAULT_VERSION": "3.0.6",
+        "SUPPORTED_PROJECTS": "CONTRABASS,ACI,VIOLA"
+      }
+    }
+  }
+}
+```
+
+⚠️ **반드시 수정**:
+- 경로: 실제 클론한 위치로 변경
+- `FIGMA_TOKEN`: 발급받은 토큰으로 교체
+
+### 4. 메타데이터 수집
+
+**경량화된 수집 (Phase 4):**
+- screenId, pageTitle만 빠르게 수집
+- 상세 정보(description)는 실제 검색 시 자동 수집 (지연 로딩)
+- 수집 시간: 5-10분 (기존 30분+ → 6배 빠름!)
+
 ```bash
-# 방법 1: .env 파일 생성
-echo "FIGMA_TOKEN=figd_여기에_실제_토큰" > .env
-
-# 방법 2: 직접 export (임시)
-export FIGMA_TOKEN="figd_여기에_실제_토큰"
+npm run collect-metadata
 ```
 
-## 🚀 테스트 실행
+### 4. Cursor 재시작 후 사용
 
-```bash
-npm run test:figma
+**✨ Cursor가 MCP 서버를 자동으로 실행합니다!**
+
+터미널에서 `npm start`를 실행할 필요가 없습니다. 그냥 Cursor에서 바로 사용하세요:
+
+```
+@oke-front-mcp CONT-05_04_54 보여줘
+@oke-front-mcp 콘트라베이스 3.0.6 로드밸런서 모니터링
 ```
 
-또는
+---
 
-```bash
-node test-figma.js
+## 💡 사용 시나리오
+
+### 일반적인 사용 (매일)
 ```
-
-## 📊 예상 결과
-
-### ✅ 성공한 경우:
-```
-🚀 Figma API 테스트 시작...
-
-📂 1단계: 팀의 프로젝트 목록 조회...
-✅ 총 5개의 프로젝트를 찾았습니다:
-   1. 콘트라베이스 (ID: xxx)
-   2. 다른프로젝트 (ID: yyy)
-   ...
-
-🔍 2단계: "콘트라베이스" 프로젝트 검색...
-✅ 찾았습니다: 콘트라베이스
-
-📄 3단계: 프로젝트의 파일 목록 조회...
-✅ 총 10개의 파일을 찾았습니다:
-   1. 콘트라베이스 v3.0.6
-   2. 콘트라베이스 v3.0.5
-   ...
-
-🔍 4단계: "3.0.6" 버전 파일 검색...
-✅ 대상 파일: 콘트라베이스 v3.0.6
-
-📖 5단계: 파일 내용 조회 중...
-✅ 파일명: 콘트라베이스 v3.0.6
-✅ 버전: 12345
-✅ 최종 수정: 2026-01-15
-
-🔍 6단계: "로드밸런서" 관련 내용 검색...
-
-페이지 1: 로드밸런서 신규 기능
-   🎯 ===== 로드밸런서 관련 페이지 발견! =====
+1. 컴퓨터 켜기
+2. Cursor IDE 실행
+3. 아무 프로젝트나 열기
+4. "@oke-front-mcp 질문" 입력
    
-   📝 Description 전체 내용:
-   --------------------------------------------------
-   [기획 내용]
-   - 로드밸런서 설정 화면 추가
-   - 헬스체크 기능 구현
-   - 트래픽 분산 알고리즘 선택 옵션
-   ...
-   --------------------------------------------------
-
-✅ 성공! 로드밸런서 관련 기획 내용을 Figma API로 가져올 수 있습니다!
+→ 끝! 터미널 명령어 필요 없음
 ```
 
-### ❌ 오류가 발생한 경우:
+### 언제 터미널을 사용하나?
+```bash
+# 1. 최초 설치 시 (딱 한 번)
+npm install
+npm run build
 
-#### 403 Forbidden
-- **원인**: Token 권한 부족 또는 팀 접근 권한 없음
-- **해결**: 
-  1. Figma Settings에서 Token Scope 확인
-  2. 팀/프로젝트 접근 권한 확인
-  3. 회사 이메일 계정으로 로그인했는지 확인
+# 2. MCP 코드를 수정했을 때
+npm run build
+# → Cursor 재시작
 
-#### 404 Not Found
-- **원인**: 팀 ID가 잘못되었거나 존재하지 않음
-- **해결**: 
-  1. `test-figma.js`의 `TEAM_ID` 확인
-  2. Figma URL에서 올바른 팀 ID 복사
+# 3. Figma 기획서가 업데이트되었을 때
+npm run collect-metadata
+```
 
-#### Token 없음
-- **원인**: 환경변수 설정 안됨
-- **해결**: `.env` 파일 생성 또는 `export FIGMA_TOKEN="..."` 실행
+---
 
-## 🎓 테스트 결과 해석
+## 📖 문서
 
-### 테스트 성공 시
-✅ **MCP 서버에서 구현 가능합니다!**
+- **[설치 및 사용 가이드](./SETUP_GUIDE.md)** - 자세한 설치 방법 및 사용법
+- **[개발 문서](./DEVELOPMENT.md)** - 개발 진행 상황 및 기술 세부사항
 
-다음과 같은 사용자 명령을 처리할 수 있습니다:
-- "콘트라베이스 3.0.6 로드밸런서 기획 보여줘"
-- "버전 3.0.6의 새로운 기능 알려줘"
-- "로드밸런서 화면 구조 설명해줘"
+---
 
-### 테스트 실패 시
-각 단계에서 어디까지 성공했는지 확인하고:
-1. **1단계 실패**: Token 또는 팀 접근 권한 문제
-2. **2단계 실패**: 프로젝트 이름이 다름 (출력된 목록 확인)
-3. **3단계 실패**: 파일 접근 권한 문제
-4. **6단계에서 못 찾음**: Description에 다른 키워드 사용 (파일 구조 확인)
+## 🛠️ 명령어
 
-## 📝 다음 단계
+### 일상적인 사용 (항상)
+```
+@oke-front-mcp 질문 입력
+```
+**✨ MCP 서버는 Cursor가 자동으로 실행합니다!**  
+**터미널에서 별도로 서버를 실행할 필요가 없습니다.**
 
-테스트가 성공하면:
-1. 전체 MCP 서버 구현 시작
-2. 다른 데이터 소스(퍼블 레포, Confluence) 통합
-3. 자연어 처리 로직 추가
-4. Cursor와 연동
+### 필요한 경우에만
+```bash
+# 최초 설치 시 (딱 1번)
+npm install
+npm run build
 
-## 💡 팁
+# 코드 수정 시
+npm run build
 
-- 첫 실행 시 시간이 다소 걸릴 수 있습니다 (API 호출이 많음)
-- Description이 없는 페이지도 있을 수 있습니다
-- 실제 프로젝트/파일 이름이 예상과 다를 수 있으니 출력 결과를 잘 확인하세요
+# Figma 기획서 업데이트 시 (가끔)
+npm run collect-metadata
+```
+
+### 개발자용
+```bash
+# 개발 모드 (watch) - MCP 개발 시에만
+npm run dev
+
+# 수동 서버 실행 - 디버깅용
+npm start
+```
+
+---
+
+## 📊 현재 상태
+
+- ✅ **Phase 1**: Figma 연동 (화면 ID 직접 조회)
+- ✅ **Phase 2**: 자연어 검색 (메타데이터 인덱싱)
+- ✅ **Phase 2.5**: 그룹화된 검색 결과 (프로젝트/버전별)
+- ✅ **Phase 3**: Figma API Fallback + 자동 학습
+- ✅ **Phase 4**: 경량화된 수집 + 지연 로딩
+- 🔜 **Phase 5**: 퍼블리셔 레포 연동
+- 🔜 **Phase 6**: Confluence + Ant Vue 연동
+
+---
+
+## 🎯 사용 예시
+
+### 화면 ID로 검색
+
+```
+@oke-front-mcp CONT-05_04_54 보여줘
+```
+
+**결과**:
+```
+📋 CONT-05_04_54 - 로드밸런서_상세 (모니터링)
+
+✓ 프로젝트: CONTRABASS
+✓ 버전: 3.0.6
+✓ 담당: 김가영2, 김소영
+
+📝 기능 설명:
+   • 로드밸런서 상세 정보 추가
+   • 새 탭 추가: 기본 정보 + 모니터링
+   ...
+```
+
+### 자연어로 검색
+
+```
+@oke-front-mcp 콘트라베이스 3.0.6 로드밸런서 모니터링
+```
+
+**1개 결과 시**:
+- 자동으로 상세 정보 표시
+
+**여러 개 결과 시**:
+- 후보 목록 제시 (점수 순 정렬)
+
+---
+
+## 🔄 메타데이터 갱신
+
+Figma 기획서가 변경되면 메타데이터를 다시 수집하세요:
+
+```bash
+npm run collect-metadata
+```
+
+**Phase 4 경량화 적용:**
+- **수집 시간**: 5-10분 (기존 30분+ → 6배 빠름!)
+- **수집 내용**: screenId, pageTitle만 수집
+- **상세 정보**: 실제 검색 시 자동으로 수집 (지연 로딩)
+
+**권장 주기**: 주 1회 또는 배포 전
+
+💡 **Tip**: 자동 학습 + 지연 로딩 덕분에 자주 수집하지 않아도 괜찮습니다!
+
+---
+
+## ❓ 문제 해결
+
+### MCP가 작동하지 않음
+
+1. Node.js 버전 확인 (18 이상 필요)
+   ```bash
+   node --version
+   ```
+
+2. 빌드 확인
+   ```bash
+   npm run build
+   ```
+
+3. Cursor 설정 파일 확인
+   - 경로가 정확한지
+   - `FIGMA_TOKEN`이 입력되었는지
+
+4. Cursor 완전 재시작
+   ```bash
+   killall Cursor && open -a Cursor
+   ```
+
+### 검색 결과가 없음
+
+1. 메타데이터 수집 여부 확인
+   ```bash
+   ls -la data/screen-index.json
+   ```
+
+2. 메타데이터 재수집
+   ```bash
+   npm run collect-metadata
+   ```
+
+3. 다른 키워드로 재검색
+
+---
+
+## 🤝 기여
+
+### 버그 제보
+팀 채널에 문의하거나 이슈를 생성해주세요.
+
+---
+
+## 📄 라이선스
+
+MIT License
+
+---
+
+## 👥 팀
+
+**Okestro Frontend Team**
+
+- 기획: Figma
+- 퍼블: Bitbucket (okestrolab/okestro-ui)
+- 디자인 시스템: Confluence
+- UI 컴포넌트: Ant Design Vue
+
+---
+
+**버전**: 0.3.0  
+**최종 업데이트**: 2026-02-20  
+**상태**: Phase 4 완료 (경량화된 수집 + 지연 로딩)
