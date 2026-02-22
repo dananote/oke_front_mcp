@@ -1,295 +1,182 @@
 # oke-front-mcp
 
-**프론트엔드 개발 통합 MCP 서버**
-
-Figma 기획서를 Cursor에서 자연어로 검색하는 MCP 서버입니다.
+사내 프론트엔드 개발자가 Cursor 채팅에서 자연어로 질의하면, Figma 기획 정보를 빠르게 찾아주고, 조회 결과를 로컬 메타데이터에 학습 저장하는 MCP 서버입니다.
 
 ---
 
-## 🎯 주요 기능
+## 프로젝트 배경
 
-- ✅ **화면 ID 직접 조회**: `CONT-05_04_54 보여줘`
-- ✅ **자연어 검색**: `콘트라베이스 3.0.6 로드밸런서 모니터링`
-- ✅ **자동 후보 제시**: 여러 결과가 있을 때 후보 목록 표시 (프로젝트/버전별 그룹화)
-- ✅ **경량화된 메타데이터 수집**: 5-10분 만에 3,000+ 화면 수집 (기존 30분+)
-- ✅ **지연 로딩 (Lazy Loading)**: 검색 시 필요한 상세 정보만 조회
-- ✅ **Figma API Fallback**: 메타데이터에 없는 최신 화면도 실시간 검색
-- ✅ **자동 학습**: 한 번 찾은 화면은 다음부터 빠르게 검색
+기존에는 화면 개발을 위해 아래 소스를 각각 열어 확인해야 했습니다.
+
+- Figma 기획서
+- 퍼블리셔 산출물/저장소
+- 디자인 시스템 문서
+- UI 컴포넌트 문서
+
+이 구조는 "정보 탐색 시간"을 크게 만들고, 같은 질문을 반복하게 만듭니다.  
+`oke-front-mcp`는 질문 중심 개발 흐름으로 이 문제를 줄이는 것을 목표로 합니다.
 
 ---
 
-## 🚀 빠른 시작
+## 핵심 목표
 
-### 1. 설치
+1. 분산된 개발 자료(Figma, 퍼블 코드, 디자인 정책)의 탐색 비용 감소
+2. 자연어로 기획 검색
+3. 모호한 질의는 후보/버전 선택으로 안전하게 처리
+4. 한 번 찾은 정보는 자동 학습하여 다음 질의 속도 향상
+5. 재수집 실패에도 기존 데이터가 보존되는 운영 안정성 확보
+
+---
+
+## 현재 구현 범위 (Step 1: Figma)
+
+현재는 Figma 단계를 중심으로 아래가 구현되어 있습니다.
+
+- 화면 ID 직접 조회(`CONT-XX_YY_ZZ`)
+- 자연어 검색(프로젝트/버전/기능 키워드)
+- 버전 미지정 시 재질문(자동확정 방지)
+- 후보 제시 + 번호 선택(`1`, `2번`, `3 번기획`)
+- description lazy loading
+- 로컬 미스 시 Figma fallback 검색
+- 조회 결과 자동 학습 저장
+- 안전 재수집(merge + backup + 원자적 저장)
+
+## Step 2 (Publisher) 1차 구현 완료
+
+- `search_publisher_code` tool 추가
+- 하이브리드 저장소 동기화
+  - 자동 clone/pull 우선
+  - 실패 시 `PUBLISHER_REPO_PATH` fallback
+- 퍼블 코드 인덱스(`data/publisher-index.json`) 생성/갱신
+- 화면/기능 키워드 기반 component bundle 응답
+  - main vue
+  - related scripts
+  - related styles(sass/scss/css)
+  - shared components(`src/components`)
+
+---
+
+## 어떻게 동작하는가
+
+기본 흐름:
+
+1. 질의 파싱(screenId/project/version/keywords)
+2. 로컬 인덱스(`data/screen-index.json`) 검색
+3. 단건이면 확정, 복수면 후보 제시
+4. 상세 정보 필요 시 Figma 조회(lazy loading)
+5. 결과를 인덱스에 저장(학습)
+6. 로컬 미스면 Figma fallback 후 다시 저장
+
+핵심은 "빠른 로컬 검색 + 누락 시 실시간 보완 + 보완 결과 학습"입니다.
+
+---
+
+## 주요 파일
+
+- `src/index.ts`
+  - MCP tool 등록/라우팅
+- `src/tools/search-figma-spec.ts`
+  - Figma 질의 처리 오케스트레이션
+- `src/tools/search-publisher-code.ts`
+  - Publisher 질의 처리 및 번들 응답
+- `src/services/search.ts`
+  - Figma 메타데이터 검색/저장
+- `src/services/figma.ts`
+  - Figma API 연동
+- `src/services/publisher.ts`
+  - 퍼블 저장소 동기화/인덱싱/번들 검색
+
+---
+
+## 버전별(Phase) 구현 요약
+
+### Phase 1
+
+- Figma API 연결
+- 화면 ID 직접 조회
+
+### Phase 2
+
+- 메타데이터 인덱싱
+- 자연어 검색 도입
+
+### Phase 2.5
+
+- 후보 선택 UX 강화
+- 버전 재질문 및 번호 선택 안정화
+
+### Phase 3
+
+- fallback 검색 + 자동 학습
+
+### Phase 4
+
+- 경량 수집 + lazy loading
+- 저장 경로/재수집 안정성 강화
+
+---
+
+## 기술 스택
+
+- Node.js
+- TypeScript
+- `@modelcontextprotocol/sdk`
+- `axios`
+- Node `fs/path` 모듈(로컬 인덱스 운영)
+
+선택 이유:
+
+- MCP 표준 구조를 따르면서, 검색/저장 로직을 타입 안정적으로 유지하기 위해 TypeScript + MCP SDK 조합을 사용했습니다.
+
+---
+
+## 디렉토리/문서 체계
+
+코드:
+
+- `src/index.ts`: MCP 서버 진입점
+- `src/tools/search-figma-spec.ts`: 질의 처리 오케스트레이션
+- `src/services/search.ts`: 로컬 검색/저장
+- `src/services/figma.ts`: Figma API
+- `src/scripts/collect-metadata.ts`: 수집 스크립트
+
+문서(고정 5개):
+
+- `docs/SEARCH_FLOW.md`
+- `docs/DEVELOPMENT.md`
+- `docs/DEBUG.md`
+- `docs/PLAN.md`
+- `docs/SETUP_GUIDE.md`
+
+---
+
+## 빠른 시작
 
 ```bash
-# 저장소 클론
-git clone <repository-url>
-cd oke-front-mcp
-
-# 의존성 설치 및 빌드
 npm install
 npm run build
-```
-
-### 2. Figma Token 발급
-
-1. https://www.figma.com/ 로그인
-2. Settings → Personal access tokens
-3. "Generate new token" (Scopes: File content, Read comments, Read file/project info)
-4. 토큰 복사
-
-### 3. Cursor 연동
-
-`~/.cursor/mcp.json` 파일에 추가:
-
-**✅ 모든 환경변수는 Cursor settings에서만 관리합니다.**  
-**❌ `.env` 파일은 사용하지 않습니다!**
-
-```json
-{
-  "mcpServers": {
-    "oke-front-mcp": {
-      "command": "node",
-      "args": ["/Users/당신의사용자명/Desktop/oke-front-mcp/dist/index.js"],
-      "env": {
-        "FIGMA_TOKEN": "여기에_발급받은_토큰",
-        "FIGMA_TEAM_ID": "1498602828936104321",
-        "DEFAULT_PROJECT": "CONTRABASS",
-        "DEFAULT_VERSION": "3.0.6",
-        "SUPPORTED_PROJECTS": "CONTRABASS,ACI,VIOLA"
-      }
-    }
-  }
-}
-```
-
-⚠️ **반드시 수정**:
-- 경로: 실제 클론한 위치로 변경
-- `FIGMA_TOKEN`: 발급받은 토큰으로 교체
-
-### 4. 메타데이터 수집
-
-**경량화된 수집 (Phase 4):**
-- screenId, pageTitle만 빠르게 수집
-- 상세 정보(description)는 실제 검색 시 자동 수집 (지연 로딩)
-- 수집 시간: 5-10분 (기존 30분+ → 6배 빠름!)
-
-```bash
 npm run collect-metadata
 ```
 
-### 4. Cursor 재시작 후 사용
+Cursor 질의 예시:
 
-**✨ Cursor가 MCP 서버를 자동으로 실행합니다!**
-
-터미널에서 `npm start`를 실행할 필요가 없습니다. 그냥 Cursor에서 바로 사용하세요:
-
-```
-@oke-front-mcp CONT-05_04_54 보여줘
-@oke-front-mcp 콘트라베이스 3.0.6 로드밸런서 모니터링
+```text
+@oke-front-mcp 콘트라베이스 3.0.6 볼륨 수정 기획 찾아줘
+@oke-front-mcp 리스너 생성 퍼블 코드 찾아줘
 ```
 
 ---
 
-## 💡 사용 시나리오
+## 현재 상태와 다음 단계
 
-### 일반적인 사용 (매일)
-```
-1. 컴퓨터 켜기
-2. Cursor IDE 실행
-3. 아무 프로젝트나 열기
-4. "@oke-front-mcp 질문" 입력
-   
-→ 끝! 터미널 명령어 필요 없음
-```
+현재:
 
-### 언제 터미널을 사용하나?
-```bash
-# 1. 최초 설치 시 (딱 한 번)
-npm install
-npm run build
+- Step 1(Figma) 고도화 진행 중
+- 검색 정합성/학습 안정성 개선 완료
 
-# 2. MCP 코드를 수정했을 때
-npm run build
-# → Cursor 재시작
+다음:
 
-# 3. Figma 기획서가 업데이트되었을 때
-npm run collect-metadata
-```
+- Step 2(Publisher 연동)
+- Step 3(Design System/Confluence/컴포넌트 가이드 연동)
 
----
-
-## 📖 문서
-
-- **[설치 및 사용 가이드](./SETUP_GUIDE.md)** - 자세한 설치 방법 및 사용법
-- **[개발 문서](./DEVELOPMENT.md)** - 개발 진행 상황 및 기술 세부사항
-
----
-
-## 🛠️ 명령어
-
-### 일상적인 사용 (항상)
-```
-@oke-front-mcp 질문 입력
-```
-**✨ MCP 서버는 Cursor가 자동으로 실행합니다!**  
-**터미널에서 별도로 서버를 실행할 필요가 없습니다.**
-
-### 필요한 경우에만
-```bash
-# 최초 설치 시 (딱 1번)
-npm install
-npm run build
-
-# 코드 수정 시
-npm run build
-
-# Figma 기획서 업데이트 시 (가끔)
-npm run collect-metadata
-```
-
-### 개발자용
-```bash
-# 개발 모드 (watch) - MCP 개발 시에만
-npm run dev
-
-# 수동 서버 실행 - 디버깅용
-npm start
-```
-
----
-
-## 📊 현재 상태
-
-- ✅ **Phase 1**: Figma 연동 (화면 ID 직접 조회)
-- ✅ **Phase 2**: 자연어 검색 (메타데이터 인덱싱)
-- ✅ **Phase 2.5**: 그룹화된 검색 결과 (프로젝트/버전별)
-- ✅ **Phase 3**: Figma API Fallback + 자동 학습
-- ✅ **Phase 4**: 경량화된 수집 + 지연 로딩
-- 🔜 **Phase 5**: 퍼블리셔 레포 연동
-- 🔜 **Phase 6**: Confluence + Ant Vue 연동
-
----
-
-## 🎯 사용 예시
-
-### 화면 ID로 검색
-
-```
-@oke-front-mcp CONT-05_04_54 보여줘
-```
-
-**결과**:
-```
-📋 CONT-05_04_54 - 로드밸런서_상세 (모니터링)
-
-✓ 프로젝트: CONTRABASS
-✓ 버전: 3.0.6
-✓ 담당: 김가영2, 김소영
-
-📝 기능 설명:
-   • 로드밸런서 상세 정보 추가
-   • 새 탭 추가: 기본 정보 + 모니터링
-   ...
-```
-
-### 자연어로 검색
-
-```
-@oke-front-mcp 콘트라베이스 3.0.6 로드밸런서 모니터링
-```
-
-**1개 결과 시**:
-- 자동으로 상세 정보 표시
-
-**여러 개 결과 시**:
-- 후보 목록 제시 (점수 순 정렬)
-
----
-
-## 🔄 메타데이터 갱신
-
-Figma 기획서가 변경되면 메타데이터를 다시 수집하세요:
-
-```bash
-npm run collect-metadata
-```
-
-**Phase 4 경량화 적용:**
-- **수집 시간**: 5-10분 (기존 30분+ → 6배 빠름!)
-- **수집 내용**: screenId, pageTitle만 수집
-- **상세 정보**: 실제 검색 시 자동으로 수집 (지연 로딩)
-
-**권장 주기**: 주 1회 또는 배포 전
-
-💡 **Tip**: 자동 학습 + 지연 로딩 덕분에 자주 수집하지 않아도 괜찮습니다!
-
----
-
-## ❓ 문제 해결
-
-### MCP가 작동하지 않음
-
-1. Node.js 버전 확인 (18 이상 필요)
-   ```bash
-   node --version
-   ```
-
-2. 빌드 확인
-   ```bash
-   npm run build
-   ```
-
-3. Cursor 설정 파일 확인
-   - 경로가 정확한지
-   - `FIGMA_TOKEN`이 입력되었는지
-
-4. Cursor 완전 재시작
-   ```bash
-   killall Cursor && open -a Cursor
-   ```
-
-### 검색 결과가 없음
-
-1. 메타데이터 수집 여부 확인
-   ```bash
-   ls -la data/screen-index.json
-   ```
-
-2. 메타데이터 재수집
-   ```bash
-   npm run collect-metadata
-   ```
-
-3. 다른 키워드로 재검색
-
----
-
-## 🤝 기여
-
-### 버그 제보
-팀 채널에 문의하거나 이슈를 생성해주세요.
-
----
-
-## 📄 라이선스
-
-MIT License
-
----
-
-## 👥 팀
-
-**Okestro Frontend Team**
-
-- 기획: Figma
-- 퍼블: Bitbucket (okestrolab/okestro-ui)
-- 디자인 시스템: Confluence
-- UI 컴포넌트: Ant Design Vue
-
----
-
-**버전**: 0.3.0  
-**최종 업데이트**: 2026-02-20  
-**상태**: Phase 4 완료 (경량화된 수집 + 지연 로딩)
+# oke-front-mcp

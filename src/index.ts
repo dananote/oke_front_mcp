@@ -18,8 +18,10 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import dotenv from 'dotenv';
 import { FigmaService } from './services/figma.js';
+import { PublisherService } from './services/publisher.js';
 import { SearchService } from './services/search.js';
 import { searchFigmaSpecTool } from './tools/search-figma-spec.js';
+import { searchPublisherCodeTool } from './tools/search-publisher-code.js';
 
 // 환경변수 로드
 dotenv.config();
@@ -30,6 +32,7 @@ dotenv.config();
 class OkeFrontMCPServer {
   private server: Server;
   private figmaService: FigmaService;
+  private publisherService: PublisherService;
   private searchService: SearchService;
 
   constructor() {
@@ -51,6 +54,7 @@ class OkeFrontMCPServer {
       process.env.FIGMA_TOKEN || '',
       process.env.FIGMA_TEAM_ID || ''
     );
+    this.publisherService = new PublisherService();
     this.searchService = new SearchService();
 
     this.setupHandlers();
@@ -82,12 +86,39 @@ class OkeFrontMCPServer {
               version: {
                 type: 'string',
                 description: '버전 (예: 3.0.6)',
-                default: process.env.DEFAULT_VERSION || '3.0.6',
               },
               autoConfirm: {
                 type: 'boolean',
                 description: '1개 결과만 매칭 시 자동 확정 (기본값: true)',
                 default: true,
+              },
+            },
+            required: ['query'],
+          },
+        },
+        {
+          name: 'search_publisher_code',
+          description: '퍼블리셔 저장소(vue/sass)에서 화면 관련 코드 번들을 검색합니다.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: '검색어: 화면명/메뉴명/기능명 (예: "볼륨 수정", "리스너 생성")',
+              },
+              project: {
+                type: 'string',
+                description: '프로젝트명 (예: CONTRABASS, VIOLA)',
+              },
+              maxResults: {
+                type: 'number',
+                description: '최대 결과 개수 (기본값: 3)',
+                default: 3,
+              },
+              refreshIndex: {
+                type: 'boolean',
+                description: 'publisher index를 강제로 재생성할지 여부',
+                default: false,
               },
             },
             required: ['query'],
@@ -104,6 +135,8 @@ class OkeFrontMCPServer {
         switch (name) {
           case 'search_figma_spec':
             return await searchFigmaSpecTool(this.figmaService, this.searchService, args);
+          case 'search_publisher_code':
+            return await searchPublisherCodeTool(this.publisherService, args);
           
           default:
             throw new Error(`Unknown tool: ${name}`);

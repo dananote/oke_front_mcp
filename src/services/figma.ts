@@ -90,17 +90,75 @@ export class FigmaService {
    * Figma 파일 내용 조회
    */
   async getFileContent(fileKey: string, nodeId?: string, depth: number = 5): Promise<any> {
-    try {
-      const params: any = { depth };
-      if (nodeId) {
-        params.ids = nodeId;
+    const depthCandidates = this.buildDepthCandidates(depth);
+    let lastError: unknown;
+
+    for (let i = 0; i < depthCandidates.length; i++) {
+      const attemptDepth = depthCandidates[i];
+
+      try {
+        const params: any = { depth: attemptDepth };
+        if (nodeId) {
+          params.ids = nodeId;
+        }
+
+        const response = await this.api.get(`/files/${fileKey}`, { params });
+        return response.data;
+      } catch (error) {
+        lastError = error;
+
+        // 파일이 큰 경우 depth를 자동 축소하여 재시도
+        if (this.isRequestTooLargeError(error) && i < depthCandidates.length - 1) {
+          const nextDepth = depthCandidates[i + 1];
+          console.warn(
+            `⚠️ Figma 응답 크기 초과 (depth=${attemptDepth}) → depth=${nextDepth}로 재시도`,
+          );
+          continue;
+        }
+
+        throw new Error(`Figma 파일 내용 조회 실패: ${this.getErrorMessage(error)}`);
       }
-      
-      const response = await this.api.get(`/files/${fileKey}`, { params });
-      return response.data;
-    } catch (error) {
-      throw new Error(`Figma 파일 내용 조회 실패: ${this.getErrorMessage(error)}`);
     }
+
+    throw new Error(
+      `Figma 파일 내용 조회 실패: ${this.getErrorMessage(lastError)}`,
+    );
+  }
+
+  private buildDepthCandidates(requestedDepth: number): number[] {
+    const safeDepth = Number.isFinite(requestedDepth) && requestedDepth > 0
+      ? Math.floor(requestedDepth)
+      : 5;
+
+    const candidates = [
+      safeDepth,
+      10,
+      8,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+    ].filter((d) => d <= safeDepth);
+
+    return Array.from(new Set(candidates));
+  }
+
+  private isRequestTooLargeError(error: any): boolean {
+    if (!axios.isAxiosError(error) || !error.response) {
+      return false;
+    }
+
+    const status = error.response.status;
+    const responseMessage = String(
+      error.response.data?.err ||
+      error.response.data?.message ||
+      error.message ||
+      '',
+    ).toLowerCase();
+
+    return status === 400 && responseMessage.includes('request too large');
   }
 
   /**
@@ -197,13 +255,18 @@ export class FigmaService {
 
       // Description Frame 찾기
       const descriptionFrame = this.findDescriptionFrame(nodeContent.document);
-      if (!descriptionFrame) {
-        return '';
+      if (descriptionFrame) {
+        // 텍스트 추출
+        const texts = this.extractAllTexts(descriptionFrame);
+        const fromFrame = texts.join('\n').trim();
+        if (fromFrame) {
+          return fromFrame;
+        }
       }
 
-      // 텍스트 추출
-      const texts = this.extractAllTexts(descriptionFrame);
-      return texts.join('\n');
+      // fallback: frame 명으로 못 찾으면 전체 노드에서 Description 섹션 기준으로 수집
+      const fallbackDescriptions = this.collectDescriptionsFromNode(nodeContent.document);
+      return fallbackDescriptions.join('\n').trim();
     } catch (error) {
       console.error('설명 조회 오류:', error);
       return '';
@@ -428,16 +491,38 @@ export class FigmaService {
 
     // Page Title 찾기
     let pageTitle = 'Unknown';
-    const pageTitleValue = this.findNextTextValue(node, 'Page Title');
+    const textNodes = this.collectAllTextNodes(node);
+    const pageTitleValue = this.findValueAfterLabels(textNodes, [
+      'Page Title',
+      'page title',
+      'Title',
+      'title',
+      '페이지 타이틀',
+    ]);
     if (pageTitleValue) {
       pageTitle = pageTitleValue;
     }
 
     // Author 찾기
     let author = 'N/A';
-    const authorValue = this.findNextTextValue(node, 'Author');
+    const authorValue = this.findValueAfterLabels(textNodes, [
+      'Author',
+      'author',
+      '작성자',
+    ]);
     if (authorValue) {
       author = authorValue;
+    }
+
+    // 텍스트 라벨에서 못 찾았으면 Frame 이름에서 보조 추출
+    if (pageTitle === 'Unknown' && node.name) {
+      const titleFromName = node.name
+        .replace(screenIdPattern, '')
+        .replace(/^[-:\s_]+/, '')
+        .trim();
+      if (titleFromName) {
+        pageTitle = titleFromName;
+      }
     }
 
     // Description 수집
@@ -459,37 +544,69 @@ export class FigmaService {
     };
   }
 
-  /**
-   * 라벨 다음의 TEXT 값 찾기
-   */
-  private findNextTextValue(node: FigmaNode, labelName: string): string | null {
-    let foundLabel = false;
-    let result = '';
+  private normalizeText(value: string): string {
+    return value.replace(/\s+/g, ' ').trim().toLowerCase();
+  }
 
-    const traverse = (n: FigmaNode): void => {
-      if (result) return;
+  private collectAllTextNodes(parent: FigmaNode): Array<{name: string; characters: string}> {
+    const textNodes: Array<{name: string; characters: string}> = [];
 
-      if (n.type === 'TEXT' && n.characters) {
-        if (n.name === labelName || n.characters === labelName) {
-          foundLabel = true;
-          return;
-        }
-        if (foundLabel && n.characters !== labelName) {
-          result = n.characters;
-          return;
-        }
+    const traverse = (node: FigmaNode): void => {
+      if (node.type === 'TEXT' && node.characters) {
+        textNodes.push({
+          name: node.name || '',
+          characters: node.characters,
+        });
       }
 
-      if (n.children) {
-        for (const child of n.children) {
-          if (result) break;
+      if (node.children) {
+        for (const child of node.children) {
           traverse(child);
         }
       }
     };
 
-    traverse(node);
-    return result || null;
+    traverse(parent);
+    return textNodes;
+  }
+
+  /**
+   * 라벨 다음에 오는 값 찾기 (라벨 변형/대소문자/공백 차이 허용)
+   */
+  private findValueAfterLabels(
+    textNodes: Array<{name: string; characters: string}>,
+    labels: string[]
+  ): string | null {
+    const labelSet = new Set(labels.map(label => this.normalizeText(label)));
+    const nonValueLabels = new Set([
+      ...labels.map(label => this.normalizeText(label)),
+      'screen id',
+      'description',
+      'changelog',
+      'page title',
+      'author',
+    ]);
+
+    for (let i = 0; i < textNodes.length; i++) {
+      const current = textNodes[i];
+      const currentName = this.normalizeText(current.name || '');
+      const currentText = this.normalizeText(current.characters || '');
+      const isLabel = labelSet.has(currentName) || labelSet.has(currentText);
+
+      if (!isLabel) continue;
+
+      // 바로 다음 노드가 아니라도, 근처에서 첫 번째 유효 값을 찾는다.
+      for (let j = i + 1; j < Math.min(i + 8, textNodes.length); j++) {
+        const candidateRaw = textNodes[j].characters?.trim() || '';
+        const candidate = this.normalizeText(candidateRaw);
+        if (!candidate) continue;
+        if (nonValueLabels.has(candidate)) continue;
+        if (/^[A-Z]+-\d{2}_\d{2}_\d{2}$/i.test(candidateRaw)) continue;
+        return candidateRaw;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -551,54 +668,43 @@ export class FigmaService {
         };
       }
 
-      const node = fileContent.nodes[nodeId];
-      
-      /**
-       * 특정 라벨 다음의 TEXT 노드 내용 찾기
-       */
-      const findNextTextNode = (parent: FigmaNode, afterName: string): string | null => {
-        let foundLabel = false;
-        let foundContent = '';
-        
-        const traverse = (n: FigmaNode): void => {
-          if (foundContent) return;
-          
-          if (n.type === 'TEXT' && n.characters) {
-            if (n.name === afterName || n.characters === afterName) {
-              foundLabel = true;
-              return;
-            }
-            
-            if (foundLabel && n.characters !== afterName) {
-              foundContent = n.characters;
-              return;
-            }
-          }
-          
-          if (n.children) {
-            for (const child of n.children) {
-              if (foundContent) break;
-              traverse(child);
-            }
-          }
-        };
-        
-        traverse(parent);
-        return foundContent || null;
-      };
-      
+      const node = fileContent.nodes[nodeId]?.document || fileContent.nodes[nodeId];
+      const textNodes = this.collectAllTextNodes(node);
+
       // Page Title 찾기
       let pageTitle = 'Unknown';
-      const pageTitleValue = findNextTextNode(node, 'Page Title');
+      const pageTitleValue = this.findValueAfterLabels(textNodes, [
+        'Page Title',
+        'page title',
+        'Title',
+        'title',
+        '페이지 타이틀',
+      ]);
       if (pageTitleValue) {
         pageTitle = pageTitleValue.trim();
       }
 
       // Author 찾기
       let author = 'N/A';
-      const authorValue = findNextTextNode(node, 'Author');
+      const authorValue = this.findValueAfterLabels(textNodes, [
+        'Author',
+        'author',
+        '작성자',
+      ]);
       if (authorValue) {
         author = authorValue.trim();
+      }
+
+      // 텍스트 라벨에서 못 찾았으면 Frame 이름에서 보조 추출
+      const screenIdPattern = /^([A-Z]+-\d{2}_\d{2}_\d{2})/;
+      if (pageTitle === 'Unknown' && node?.name) {
+        const titleFromName = node.name
+          .replace(screenIdPattern, '')
+          .replace(/^[-:\s_]+/, '')
+          .trim();
+        if (titleFromName) {
+          pageTitle = titleFromName;
+        }
       }
 
       // Description 수집
