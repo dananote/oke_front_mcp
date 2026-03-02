@@ -1,0 +1,30 @@
+{
+  "name": "search_publisher_code",
+  "description": "퍼블리셔 저장소(Vue/Sass)에서 화면·기능별 퍼블 코드 번들 검색. \"퍼블 코드 찾아줘\" 요청 시 사용. 기획 조회가 아님.",
+  "arguments": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "검색어: 화면명/메뉴명/기능명 (예: \"볼륨 수정\", \"리스너 생성\")"
+      },
+      "project": {
+        "type": "string",
+        "description": "프로젝트명 (예: CONTRABASS, VIOLA)"
+      },
+      "maxResults": {
+        "type": "number",
+        "description": "최대 결과 개수 (기본값: 3)",
+        "default": 3
+      },
+      "refreshIndex": {
+        "type": "boolean",
+        "description": "publisher index를 강제로 재생성할지 여부",
+        "default": false
+      }
+    },
+    "required": [
+      "query"
+    ]
+  }
+}

@@ -9,11 +9,12 @@
   },
   "scripts": {
     "test:figma": "node test-figma.js",
-    "build": "tsc",
+    "build": "tsc && npm run sync-mcp-descriptors",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "prepare": "npm run build",
-    "collect-metadata": "tsx src/scripts/collect-metadata.ts"
+    "collect-metadata": "tsx src/scripts/collect-metadata.ts",
+    "sync-mcp-descriptors": "tsx src/scripts/sync-mcp-descriptors.ts"
   },
   "keywords": [
     "mcp",

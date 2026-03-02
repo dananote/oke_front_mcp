@@ -1,8 +1,8 @@
 {
   "version": "1.0",
-  "lastIndexedAt": "2026-02-22T10:20:29.011Z",
+  "lastIndexedAt": "2026-03-02T10:41:43.704Z",
   "repoPath": "/Users/taeheerho/.oke-front-mcp/publisher/okestro-ui",
-  "gitCommit": "6433c1e20bb1f54f294e5b104d31c3f0b1ad7bd8",
+  "gitCommit": "54e7d3df78400685f7bed4b92d13f8593b79b2e8",
   "entries": [
     {
       "id": "src/CommonUIApp.vue",
@@ -7621,6 +7621,32 @@
       "directoryPath": "src/views/publishing-cicd/repository"
     },
     {
+      "id": "src/views/publishing-cicd/repository/SourceDetail2.vue",
+      "filePath": "src/views/publishing-cicd/repository/SourceDetail2.vue",
+      "project": "unknown",
+      "fileType": "vue",
+      "componentName": "SourceDetail2",
+      "keywords": [
+        "src",
+        "views",
+        "publishing",
+        "cicd",
+        "repository",
+        "sourcedetail2",
+        "vue"
+      ],
+      "styleRefs": [],
+      "sharedComponentRefs": [
+        "@/components/icons",
+        "@/components/layouts",
+        "@/components/no-data",
+        "@/components/table",
+        "@/components/solution/modal",
+        "@/components/solution/common"
+      ],
+      "directoryPath": "src/views/publishing-cicd/repository"
+    },
+    {
       "id": "src/views/publishing-cicd/repository/SourceDetailCommit.vue",
       "filePath": "src/views/publishing-cicd/repository/SourceDetailCommit.vue",
       "project": "unknown",
@@ -7693,7 +7719,8 @@
         "@/components/no-data",
         "@/components/popup",
         "@/components/solution/modal",
-        "@/components/table"
+        "@/components/table",
+        "@/components/alert"
       ],
       "directoryPath": "src/views/publishing-contrabass"
     },

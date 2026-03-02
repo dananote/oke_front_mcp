@@ -22,9 +22,23 @@ import { PublisherService } from './services/publisher.js';
 import { SearchService } from './services/search.js';
 import { searchFigmaSpecTool } from './tools/search-figma-spec.js';
 import { searchPublisherCodeTool } from './tools/search-publisher-code.js';
+import { logMcpRequest } from './utils/mcp-request-logger.js';
+import { MCP_TOOLS_SCHEMA } from './mcp-tools-schema.js';
 
 // 환경변수 로드
 dotenv.config();
+
+/** ListTools 응답용: 스키마에서 도구 목록 생성 (project 기본값은 env 반영) */
+function buildToolsList(): { name: string; description: string; inputSchema: object }[] {
+  const defaultProject = process.env.DEFAULT_PROJECT || 'CONTRABASS';
+  return MCP_TOOLS_SCHEMA.map((t) => {
+    const inputSchema = JSON.parse(JSON.stringify(t.inputSchema)) as typeof t.inputSchema;
+    if (inputSchema.properties?.project && typeof inputSchema.properties.project === 'object') {
+      inputSchema.properties.project = { ...inputSchema.properties.project, default: defaultProject };
+    }
+    return { name: t.name, description: t.description, inputSchema };
+  });
+}
 
 /**
  * MCP 서버 초기화
@@ -65,71 +79,16 @@ class OkeFrontMCPServer {
    * MCP 요청 핸들러 설정
    */
   private setupHandlers(): void {
-    // Tools 목록 제공
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [
-        {
-          name: 'search_figma_spec',
-          description: 'Figma 기획서를 검색합니다. 화면 ID(예: CONT-05_04_54) 또는 자연어(예: "로드밸런서 모니터링")로 검색 가능합니다.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              query: {
-                type: 'string',
-                description: '검색어: 화면 ID(CONT-XX_YY_ZZ) 또는 자연어 키워드',
-              },
-              project: {
-                type: 'string',
-                description: '프로젝트명 (기본값: CONTRABASS)',
-                default: process.env.DEFAULT_PROJECT || 'CONTRABASS',
-              },
-              version: {
-                type: 'string',
-                description: '버전 (예: 3.0.6)',
-              },
-              autoConfirm: {
-                type: 'boolean',
-                description: '1개 결과만 매칭 시 자동 확정 (기본값: true)',
-                default: true,
-              },
-            },
-            required: ['query'],
-          },
-        },
-        {
-          name: 'search_publisher_code',
-          description: '퍼블리셔 저장소(vue/sass)에서 화면 관련 코드 번들을 검색합니다.',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              query: {
-                type: 'string',
-                description: '검색어: 화면명/메뉴명/기능명 (예: "볼륨 수정", "리스너 생성")',
-              },
-              project: {
-                type: 'string',
-                description: '프로젝트명 (예: CONTRABASS, VIOLA)',
-              },
-              maxResults: {
-                type: 'number',
-                description: '최대 결과 개수 (기본값: 3)',
-                default: 3,
-              },
-              refreshIndex: {
-                type: 'boolean',
-                description: 'publisher index를 강제로 재생성할지 여부',
-                default: false,
-              },
-            },
-            required: ['query'],
-          },
-        },
-      ],
-    }));
+    // Tools 목록 제공 (단일 소스: mcp-tools-schema.ts)
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      logMcpRequest('ListToolsRequestSchema (tools/list)', 'Cursor가 도구 목록 요청');
+      return { tools: buildToolsList() };
+    });
 
     // Tool 실행
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      logMcpRequest('CallToolRequestSchema (tools/call)', `Cursor가 도구 실행 요청 → name="${name}"`, { name, arguments: args });
 
       try {
         switch (name) {
@@ -156,7 +115,9 @@ class OkeFrontMCPServer {
     });
 
     // Resources 목록 제공
-    this.server.setRequestHandler(ListResourcesRequestSchema, async () => ({
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      logMcpRequest('ListResourcesRequestSchema (resources/list)', 'Cursor가 리소스 목록 요청');
+      return {
       resources: [
         {
           uri: 'figma://screens',
@@ -171,11 +132,13 @@ class OkeFrontMCPServer {
           mimeType: 'application/json',
         },
       ],
-    }));
+    };
+    });
 
     // Resource 읽기
     this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
       const { uri } = request.params;
+      logMcpRequest('ReadResourceRequestSchema (resources/read)', `Cursor가 리소스 내용 요청 → uri="${uri}"`, { uri });
 
       if (uri === 'figma://screens') {
         try {

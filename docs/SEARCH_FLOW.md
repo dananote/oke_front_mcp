@@ -7,6 +7,48 @@
 
 ---
 
+## 0) MCP Tools / Resources와 Cursor 요청 흐름 (개념)
+
+검색 플로우를 이해하려면, Cursor가 우리 MCP에 **무엇을 요청하고** 우리가 **어떤 핸들러로 응답하는지**를 알아두면 좋습니다.
+
+### Tools vs Resources
+
+- **Tools** = **실행**을 위함. 우리가 정의한 로직(기획 검색, 퍼블 검색 등)을 **한 번 실행**하고 결과를 반환한다.
+- **Resources** = **데이터(자원)** 를 얻기 위함. 우리가 정한 **URI**(예: `figma://screens`)로 "이 내용 달라"고 요청하면, 우리가 그 URI에 대응하는 데이터(화면 목록, 통계 등)를 반환한다.
+
+### Cursor의 요청 단계
+
+1. **목록 조회**  
+   Cursor가 "이 MCP가 뭘 할 수 있어?"를 알기 위해:
+   - **도구 목록** 필요 → `tools/list` 요청 → 우리는 `search_figma_spec`, `search_publisher_code` 등 목록 반환.
+   - **리소스 목록** 필요 → `resources/list` 요청 → 우리는 `figma://screens`, `figma://stats` 등 목록 반환.
+
+2. **실제 사용**  
+   사용자 질의나 컨텍스트에 따라 Cursor가 **스스로** 필요한 액션을 골라 요청:
+   - **도구 실행** 필요 → `tools/call` 요청 (도구 이름 + 인자) → 우리는 해당 도구 로직 실행 후 결과 반환.
+   - **리소스 내용** 필요 → `resources/read` 요청 (URI) → 우리는 해당 URI의 데이터(JSON 등) 반환.
+
+### 예시로 보는 흐름
+
+**예: "볼륨 생성 기획 보여줘"**
+
+1. Cursor는 이미 `tools/list`로 도구 목록을 받아 둔 상태.
+2. "기획 보여줘" → Cursor가 **search_figma_spec** 실행이 필요하다고 판단.
+3. Cursor → 우리 MCP에 **tools/call** 요청  
+   `name: "search_figma_spec"`, `arguments: { query: "볼륨 생성 기획 보여줘", ... }`
+4. 우리 **CallTool** 핸들러 실행 → `searchFigmaSpecTool(...)` → Figma 검색 플로우 수행 → 기획 결과 반환.
+
+**예: 화면 목록을 컨텍스트로 쓰고 싶을 때**
+
+1. Cursor는 `resources/list`로 `figma://screens` 등을 알고 있음.
+2. "전체 화면 목록이 필요하다"고 판단하면 **resources/read** 요청  
+   `uri: "figma://screens"`
+3. 우리 **ReadResource** 핸들러 실행 → `getScreenList()` 결과 JSON 반환.
+
+정리하면, **Tools는 “실행”**, **Resources는 “자원(데이터) 획득”**이고, Cursor는 목록을 받은 뒤 **필요한 method(tools/list, tools/call, resources/list, resources/read)** 로 우리 MCP에 요청합니다. **어떤 도구를 호출할지** Cursor가 tools/list의 name·description·inputSchema와 사용자 자연어를 보고 자체 AI가 결정한다. 우리 MCP는 request.params의 **name**(선택된 도구)과 **arguments**(인자)만 받아 실행한다. "Figma vs Publisher vs 둘 다"는 Cursor가 tools/call을 몇 번·어떤 name으로 보내느냐로 정해진다. request 구조·기준 상세는 `docs/DEVELOPMENT.md` "0.1) Tools vs Resources 개념 및 Cursor 요청 흐름" 참고.
+
+---
+
 ## 1) Figma 검색 흐름
 
 ```text
