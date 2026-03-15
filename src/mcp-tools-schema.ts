@@ -19,7 +19,7 @@ export const MCP_TOOLS_SCHEMA: McpToolSchema[] = [
   {
     name: 'search_figma_spec',
     description:
-      'Figma 기획(화면 상세·스펙) 조회. "기획 찾아줘", "화면 기획 조회" 시 이 도구 사용. 화면 ID(예: CONT-05_04_54) 또는 자연어(예: 볼륨 생성)로 검색. 버전 미지정 시 후보 목록 반환.',
+      'Figma 기획(화면 상세·스펙) 조회 전용. "기획 찾아줘", "화면 기획 조회", "개발 진행 전 기획 확인" 요청에서 우선 사용. 화면 ID(예: CONT-05_04_54) 또는 자연어(예: 볼륨 생성)로 검색. 버전 미지정 시 후보 목록 반환.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -48,7 +48,7 @@ export const MCP_TOOLS_SCHEMA: McpToolSchema[] = [
   {
     name: 'search_publisher_code',
     description:
-      '퍼블리셔 저장소(Vue/Sass)에서 화면·기능별 퍼블 코드 번들 검색. "퍼블 코드 찾아줘" 요청 시 사용. 기획 조회가 아님.',
+      '퍼블리셔 저장소(Vue/Sass)에서 화면·기능별 퍼블 코드 번들을 찾고, LLM이 현재 프로젝트 규칙에 맞춰 반영할 수 있는 적용 컨텍스트를 제공. "개발해줘/적용해줘/차이 수정해줘" 요청에서 사용. 기획 조회는 반드시 search_figma_spec 사용.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -69,6 +69,14 @@ export const MCP_TOOLS_SCHEMA: McpToolSchema[] = [
           type: 'boolean',
           description: 'publisher index를 강제로 재생성할지 여부',
           default: false,
+        },
+        targetSummary: {
+          type: 'string',
+          description: '대상 화면/요구사항 요약 (예: 호스트 생성 페이지)',
+        },
+        currentCodeHint: {
+          type: 'string',
+          description: '현재 구현 코드 요약 또는 차이 비교 힌트',
         },
       },
       required: ['query'],

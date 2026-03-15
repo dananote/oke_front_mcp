@@ -1,0 +1,298 @@
+{
+  "rules": [
+    {
+      "id": "network-segment",
+      "keywords": ["네트워크", "세그먼트", "segment", "network"],
+      "tokens": ["vpc", "segment", "network"],
+      "menuHints": ["vpc", "segment"]
+    },
+    {
+      "id": "vpc-general",
+      "keywords": ["vpc", "브이피씨", "가상 네트워크"],
+      "tokens": ["vpc", "network"],
+      "menuHints": ["vpc"]
+    },
+    {
+      "id": "instance-detail",
+      "keywords": ["인스턴스 상세", "instance detail", "인스턴스 디테일"],
+      "tokens": ["compute", "instance", "detail"],
+      "menuHints": ["compute", "instance", "detail"]
+    },
+    {
+      "id": "floating-ip",
+      "keywords": ["유동ip", "유동 ip", "floating ip", "플로팅ip", "플로팅 ip"],
+      "tokens": ["floating", "ip", "floatingip"],
+      "menuHints": ["floating", "ip"]
+    },
+    {
+      "id": "connect-attach",
+      "keywords": ["연결", "연결해줘", "attach", "connect", "바인딩"],
+      "tokens": ["attach", "connect", "link"],
+      "menuHints": ["attach"]
+    },
+    {
+      "id": "modal",
+      "keywords": ["모달", "팝업", "dialog", "modal"],
+      "tokens": ["modal", "popup"],
+      "menuHints": ["modal"]
+    },
+    {
+      "id": "volume-storage",
+      "keywords": ["볼륨", "volume", "스토리지", "storage"],
+      "tokens": ["storage", "volume"],
+      "menuHints": ["storage", "volume"]
+    },
+    {
+      "id": "object-storage",
+      "keywords": ["오브젝트 스토리지", "object storage", "버킷", "bucket"],
+      "tokens": ["object", "storage", "ceph", "bucket"],
+      "menuHints": ["object", "ceph"]
+    },
+    {
+      "id": "host",
+      "keywords": ["호스트", "host"],
+      "tokens": ["host", "compute"],
+      "menuHints": ["host"]
+    },
+    {
+      "id": "loadbalancer",
+      "keywords": ["로드밸런서", "로드 밸런서", "lb", "loadbalancer", "listener", "리스너"],
+      "tokens": ["loadbalancer", "listener", "vpc"],
+      "menuHints": ["loadbalancer", "listener", "vpc"]
+    },
+    {
+      "id": "compute-instance",
+      "keywords": ["컴퓨트", "가상서버", "서버", "instance", "인스턴스"],
+      "tokens": ["compute", "instance"],
+      "menuHints": ["compute", "instance"]
+    },
+    {
+      "id": "instance-create",
+      "keywords": ["인스턴스 생성", "서버 생성", "instance create"],
+      "tokens": ["compute", "instance", "create"],
+      "menuHints": ["compute", "instance", "create"]
+    },
+    {
+      "id": "instance-snapshot",
+      "keywords": ["인스턴스 스냅샷", "서버 스냅샷", "instance snapshot"],
+      "tokens": ["compute", "instance", "snapshot"],
+      "menuHints": ["compute", "instance", "snapshot"]
+    },
+    {
+      "id": "security-group",
+      "keywords": ["보안그룹", "보안 그룹", "security group", "sg"],
+      "tokens": ["security", "group", "compute"],
+      "menuHints": ["security", "group", "compute"]
+    },
+    {
+      "id": "keypair",
+      "keywords": ["키페어", "키 페어", "keypair", "키쌍"],
+      "tokens": ["keypair", "compute"],
+      "menuHints": ["keypair", "compute"]
+    },
+    {
+      "id": "fixed-ip",
+      "keywords": ["고정ip", "고정 ip", "fixed ip", "fixedip"],
+      "tokens": ["fixed", "ip", "compute"],
+      "menuHints": ["fixed", "ip", "compute"]
+    },
+    {
+      "id": "dynamic-ip",
+      "keywords": ["유동ip", "유동 ip", "dynamic ip", "dynamicip"],
+      "tokens": ["dynamic", "ip", "floating", "compute"],
+      "menuHints": ["floating", "ip", "compute", "modal"]
+    },
+    {
+      "id": "vpc-segment",
+      "keywords": ["세그먼트", "segment", "네트워크 대역"],
+      "tokens": ["vpc", "segment"],
+      "menuHints": ["vpc", "segment"]
+    },
+    {
+      "id": "subnet",
+      "keywords": ["서브넷", "subnet", "하위 네트워크"],
+      "tokens": ["vpc", "subnet"],
+      "menuHints": ["vpc", "subnet"]
+    },
+    {
+      "id": "port",
+      "keywords": ["포트", "port"],
+      "tokens": ["vpc", "port"],
+      "menuHints": ["vpc", "port"]
+    },
+    {
+      "id": "route",
+      "keywords": ["라우트", "라우팅", "route", "routing"],
+      "tokens": ["vpc", "route", "routing"],
+      "menuHints": ["vpc", "route"]
+    },
+    {
+      "id": "router",
+      "keywords": ["라우터", "router"],
+      "tokens": ["vpc", "router"],
+      "menuHints": ["vpc", "router"]
+    },
+    {
+      "id": "nat",
+      "keywords": ["nat", "nat 게이트웨이", "nat gateway"],
+      "tokens": ["vpc", "nat", "gateway"],
+      "menuHints": ["vpc", "nat", "gateway"]
+    },
+    {
+      "id": "firewall",
+      "keywords": ["방화벽", "firewall"],
+      "tokens": ["vpc", "firewall", "security"],
+      "menuHints": ["vpc", "firewall", "security"]
+    },
+    {
+      "id": "volume-group",
+      "keywords": ["볼륨 그룹", "볼륨그룹", "volume group"],
+      "tokens": ["storage", "volume", "group"],
+      "menuHints": ["storage", "volume", "group"]
+    },
+    {
+      "id": "volume-snapshot",
+      "keywords": ["볼륨 스냅샷", "볼륨스냅샷", "volume snapshot"],
+      "tokens": ["storage", "volume", "snapshot"],
+      "menuHints": ["storage", "volume", "snapshot"]
+    },
+    {
+      "id": "volume-backup",
+      "keywords": ["볼륨 백업", "볼륨백업", "volume backup"],
+      "tokens": ["storage", "volume", "backup"],
+      "menuHints": ["storage", "volume", "backup"]
+    },
+    {
+      "id": "volume-type",
+      "keywords": ["볼륨 타입", "볼륨타입", "volume type"],
+      "tokens": ["storage", "volume", "type"],
+      "menuHints": ["storage", "volume", "type"]
+    },
+    {
+      "id": "ceph-block",
+      "keywords": ["블록 스토리지", "block storage", "rbd", "ceph block"],
+      "tokens": ["ceph", "block", "image", "storage"],
+      "menuHints": ["ceph", "block"]
+    },
+    {
+      "id": "ceph-object",
+      "keywords": ["오브젝트", "object", "버킷", "bucket", "s3", "swift"],
+      "tokens": ["ceph", "object", "bucket", "s3", "swift"],
+      "menuHints": ["ceph", "object", "bucket"]
+    },
+    {
+      "id": "ceph-file",
+      "keywords": ["파일 스토리지", "file storage", "nfs", "subvolume", "서브볼륨"],
+      "tokens": ["ceph", "file", "nfs", "subvolume"],
+      "menuHints": ["ceph", "file", "subvolume"]
+    },
+    {
+      "id": "ceph-cluster",
+      "keywords": ["클러스터", "cluster", "osd", "pool", "물리디스크"],
+      "tokens": ["ceph", "cluster", "osd", "pool"],
+      "menuHints": ["ceph", "cluster", "osd", "pool"]
+    },
+    {
+      "id": "monitoring",
+      "keywords": ["모니터링", "monitoring", "대시보드", "dashboard"],
+      "tokens": ["monitoring", "dashboard"],
+      "menuHints": ["monitoring", "dashboard"]
+    },
+    {
+      "id": "management",
+      "keywords": ["관리", "management", "엔진", "host group", "호스트 그룹"],
+      "tokens": ["management", "engine", "host", "group"],
+      "menuHints": ["management", "host", "group"]
+    },
+    {
+      "id": "ha",
+      "keywords": ["ha", "이중화", "고가용성"],
+      "tokens": ["ha", "high", "availability"],
+      "menuHints": ["ha"]
+    },
+    {
+      "id": "workflow-workload",
+      "keywords": ["워크로드", "workload", "deployment", "statefulset", "daemonset", "replicaset", "job", "pod"],
+      "tokens": ["workflow", "workload", "deployment", "statefulset", "pod"],
+      "menuHints": ["workflow", "workload", "deployment", "pod"]
+    },
+    {
+      "id": "workflow-network",
+      "keywords": ["ingress", "service", "network policy", "네트워크 정책"],
+      "tokens": ["workflow", "network", "ingress", "service", "policy"],
+      "menuHints": ["workflow", "network", "ingress", "service"]
+    },
+    {
+      "id": "workflow-storage",
+      "keywords": ["pvc", "pv", "storageclass", "스토리지 클래스"],
+      "tokens": ["workflow", "storage", "pvc", "pv", "storageclass"],
+      "menuHints": ["workflow", "storage", "pvc", "pv"]
+    },
+    {
+      "id": "setting-cluster",
+      "keywords": ["클러스터 설정", "cluster setting", "노드 스케일링", "엔진 업그레이드"],
+      "tokens": ["setting", "cluster", "node", "upgrade", "scaling"],
+      "menuHints": ["setting", "cluster", "modal"]
+    },
+    {
+      "id": "setting-security",
+      "keywords": ["보안 설정", "security setting", "rbac", "권한"],
+      "tokens": ["setting", "security", "rbac", "permission"],
+      "menuHints": ["setting", "security", "access"]
+    },
+    {
+      "id": "catalog",
+      "keywords": ["카탈로그", "catalog", "hub", "앱 배포"],
+      "tokens": ["catalog", "hub", "deploy"],
+      "menuHints": ["catalog", "hub", "deploy"]
+    },
+    {
+      "id": "pipeline",
+      "keywords": ["파이프라인", "pipeline", "빌드", "배포", "테스트"],
+      "tokens": ["pipeline", "build", "deploy", "test"],
+      "menuHints": ["pipeline", "build", "deploy", "test"]
+    },
+    {
+      "id": "repository",
+      "keywords": ["리포지토리", "repository", "소스", "source"],
+      "tokens": ["repository", "source", "git"],
+      "menuHints": ["repository", "source"]
+    },
+    {
+      "id": "account-access",
+      "keywords": ["계정", "account", "권한관리", "access"],
+      "tokens": ["account", "access", "role"],
+      "menuHints": ["account", "access", "role"]
+    },
+    {
+      "id": "login-auth",
+      "keywords": ["로그인", "인증", "login", "auth"],
+      "tokens": ["login", "auth", "access"],
+      "menuHints": ["login", "access"]
+    },
+    {
+      "id": "exception",
+      "keywords": ["예외", "exception", "장애", "에러"],
+      "tokens": ["exception", "error", "alert"],
+      "menuHints": ["exception", "monitoring"]
+    },
+    {
+      "id": "detail",
+      "keywords": ["상세", "detail"],
+      "tokens": ["detail"],
+      "menuHints": ["detail"]
+    },
+    {
+      "id": "edit-update",
+      "keywords": ["수정", "편집", "update", "edit"],
+      "tokens": ["edit", "update"],
+      "menuHints": ["edit", "update"]
+    },
+    {
+      "id": "create-action",
+      "keywords": ["생성", "등록", "추가", "create"],
+      "tokens": ["create", "new", "add"],
+      "menuHints": ["create"]
+    }
+  ]
+}

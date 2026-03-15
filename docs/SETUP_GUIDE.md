@@ -1,36 +1,37 @@
 # SETUP GUIDE
 
-이 문서는 `oke-front-mcp` 설치와 운영 설정(Figma + Publisher Step2)을 설명합니다.
-
----
-
 ## 1) 사전 준비
 
 - Node.js 18+
 - Cursor IDE
-- Figma Token
-- Bitbucket SSH 접근 권한(Publisher Step2)
+- Figma Token / Team ID
+- Bitbucket SSH 권한(Publisher 사용 시)
 
----
+### Publisher SSH 체크(필수)
+
+```bash
+ssh -T git@bitbucket.org
+```
+
+- 성공 메시지가 나오면 SSH 인증 준비 완료
+- 실패 시:
+  - `~/.ssh/id_ed25519` 키 생성 후 공개키를 Bitbucket 계정에 등록
+  - SSH Agent에 키 등록(`ssh-add`)
+  - 다시 `ssh -T git@bitbucket.org` 실행
 
 ## 2) 설치
 
 ```bash
 cd ~/Desktop
-git clone <this-repo-url>
+git clone <repo-url>
 cd oke-front-mcp
 npm install
 npm run build
 ```
 
----
-
 ## 3) Cursor MCP 설정
 
-파일:
-- `~/.cursor/mcp.json`
-
-예시:
+파일: `~/.cursor/mcp.json`
 
 ```json
 {
@@ -40,115 +41,115 @@ npm run build
       "args": ["/Users/<username>/Desktop/oke-front-mcp/dist/index.js"],
       "env": {
         "FIGMA_TOKEN": "<token>",
-        "FIGMA_TEAM_ID": "1498602828936104321",
+        "FIGMA_TEAM_ID": "<team-id>",
         "DEFAULT_PROJECT": "CONTRABASS",
         "DEFAULT_VERSION": "3.0.6",
         "SUPPORTED_PROJECTS": "CONTRABASS,SDS+,VIOLA,Boot Factory",
         "PUBLISHER_REPO_URL": "git@bitbucket.org:okestrolab/okestro-ui.git",
         "PUBLISHER_REPO_PATH": "/Users/<username>/work/okestro-ui",
-        "PUBLISHER_CACHE_PATH": "/Users/<username>/.oke-front-mcp/publisher/okestro-ui"
+        "PUBLISHER_CACHE_PATH": "/Users/<username>/.oke-front-mcp/publisher/okestro-ui",
+        "MCP_LOG_PATH": "/Users/<username>/.oke-front-mcp/mcp-debug.log"
       }
     }
   }
 }
 ```
 
-주의:
-- `PUBLISHER_REPO_PATH`는 선택값이며, auto clone/pull 실패 시 fallback으로 사용됨
-- SSH 권한이 없으면 auto clone이 실패할 수 있음
+## 4) 도구 디스크립터 동기화
 
-**MCP 요청 로그(디버깅):** Cursor가 어떤 method로·어떤 인자로 호출하는지 보고 싶다면 `env`에 `"MCP_DEBUG_LOG": "1"`을 추가하면 `~/.oke-front-mcp/mcp-request.log`에 로그가 쌓입니다. 실시간 확인은 터미널에서 `tail -f ~/.oke-front-mcp/mcp-request.log`. 자세한 방법은 `docs/DEBUG.md`의 "MCP 요청 로그로 Cursor 호출 과정 확인" 참고.
+- 단일 소스: `src/mcp-tools-schema.ts`
+- 생성:
+  - `npm run build` 또는 `npm run sync-mcp-descriptors`
+  - 생성 파일: `mcp-descriptors/search_figma_spec.json`, `mcp-descriptors/search_publisher_code.json`
 
----
+### MCP를 Cursor / mcp-qa-app에 바로 동기화
 
-## 3.1) MCP 도구 디스크립터 동기화 (Cursor가 도구를 하나만 인식할 때)
-
-도구 정의는 **단일 소스** `src/mcp-tools-schema.ts`에서 관리합니다. 서버의 tools/list 응답은 여기서 만들고, Cursor용 디스크립터 파일도 여기서 생성합니다.
-
-- **도구 스키마 수정 시:** `src/mcp-tools-schema.ts`만 수정한 뒤 `npm run build` 실행. **빌드 시마다** `mcp-descriptors/` 가 자동으로 갱신됩니다 (별도 동기화 명령 불필요).
-- **동기화 출력:** `mcp-descriptors/search_figma_spec.json`, `search_publisher_code.json`이 생성됩니다.
-
-**Cursor가 search_figma_spec을 못 보고 search_publisher_code만 보일 때:**  
-Cursor가 mcps 폴더의 디스크립터만 참고하는 경우, 우리가 생성한 디스크립터를 Cursor mcps 폴더에 복사합니다.
+**동기화 대상**: Cursor는 워크스페이스마다 다른 mcps 폴더를 씁니다. “MCP에 질문하는 쪽”은 지금 연 워크스페이스(mcp-qa-app)이므로, 동기화는 **그 워크스페이스의 Cursor 프로젝트 경로**로 가야 합니다.  
+기본값을 **mcp-qa-app** 프로젝트 경로로 두었기 때문에, **oke-front-mcp**에서 `build:dev`를 실행해도 **mcp-qa-app**을 연 창에서 MCP 질의 시 최신 도구가 적용됩니다.
 
 ```bash
-npm run sync-mcp-descriptors
-cp mcp-descriptors/*.json ~/.cursor/projects/<프로젝트ID>/mcps/user-oke-front-mcp/tools/
+# oke-front-mcp 저장소에서 실행
+cd /Users/taeheerho/Desktop/oke-front-mcp
+
+# 디스크립터만 생성 후 mcp-qa-app 쪽 Cursor tools로 복사
+npm run sync:cursor
 ```
 
-프로젝트ID는 Cursor에서 해당 워크스페이스를 열었을 때의 경로 기반 폴더명입니다 (예: `Users-taeheerho-Desktop-oke-front-mcp`). 복사 후 Cursor를 재시작하거나 MCP를 다시 연결해 보세요.
+- 기본 복사 경로: `~/.cursor/projects/Users-taeheerho-Desktop-mcp-qa-app/mcps/user-oke-front-mcp/tools/` (mcp-qa-app 워크스페이스)
+- oke-front-mcp 워크스페이스로 동기화하려면: `CURSOR_MCP_PROJECT_ID=Users-taeheerho-Desktop-oke-front-mcp npm run sync:cursor`
+- 경로 직접 지정: `CURSOR_MCP_TOOLS_DIR=/원하는/경로 npm run sync:cursor`
 
----
-
-## 4) 초기 데이터 준비
-
-### 4.1 Figma 인덱스
+**코드까지 반영한 뒤 한 번에 동기화** (빌드 + 디스크립터 생성 + mcp-qa-app 쪽 복사):
 
 ```bash
-npm run collect-metadata
+cd /Users/taeheerho/Desktop/oke-front-mcp
+npm run build:dev
 ```
 
-### 4.2 Publisher 인덱스
+- MCP 서버 코드를 수정했다면 `build:dev` 실행 후, **mcp-qa-app**을 연 Cursor 창에서 MCP 재연결(또는 창 새로고침)하면 해당 창에서 바로 최신 MCP로 테스트할 수 있습니다.
 
-별도 명령은 없고, 첫 `search_publisher_code` 호출 시 자동 생성됩니다.
+**언제 동기화가 필요한가?**
 
-생성 파일:
-- `data/publisher-index.json`
+- **로직만 변경한 경우** (도구 이름·파라미터·설명은 그대로): `npm run build`로 `dist/`만 갱신한 뒤, 다른 워크스페이스에서 Cursor를 재시작(또는 MCP 재연결)하면 **자동으로** 새 코드가 적용됩니다. Cursor가 `mcp.json`에 적힌 `dist/index.js`를 매번 새로 실행하기 때문에, 별도 동기화 없이 재시작만 하면 됩니다.
+- **도구 스키마를 변경한 경우** (이름·파라미터·설명 변경): 해당 워크스페이스의 mcps 폴더에 있는 도구 정의 JSON도 갱신해야 하므로 `npm run sync:cursor` 또는 `npm run build:dev`가 필요합니다.
 
----
+수동 복사가 필요할 때:
 
-## 5) 사용 예시
-
-### Figma
-
-```text
-@oke-front-mcp 콘트라베이스 3.0.6 볼륨 수정 기획 찾아줘
+```bash
+cp mcp-descriptors/*.json ~/.cursor/projects/<project-id>/mcps/user-oke-front-mcp/tools/
 ```
 
-### Publisher
+## 5) 실시간 로그 확인
 
-```text
-@oke-front-mcp 리스너 생성 퍼블 코드 찾아줘
+- 단일 통합 로그 파일:
+  - `~/.oke-front-mcp/mcp-debug.log`
+- 실시간 확인:
+
+```bash
+tail -f ~/.oke-front-mcp/mcp-debug.log
 ```
 
-### 기획/퍼블 “결과만 보고 싶을 때” 주의사항
+```bash
+tail -f ~/.oke-front-mcp/mcp-debug.log | rg "mcp도구실행|figma기획확인|publisher코드확인"
+```
 
-- **결과만 보려면:** 채팅에서 **@oke-front-mcp** 를 붙이고 "볼륨 생성 기획 보여줘"처럼 요청하면 됩니다. 이때 **oke-front-mcp 프로젝트 폴더(@/경로/oke-front-mcp/)를 컨텍스트에 넣지 마세요.**
-- **프로젝트 폴더를 넣으면:** AI가 이 저장소 코드를 “수정해야 할 대상”으로 인식해, MCP 도구를 호출해 주는 대신 **코드를 고치거나 스크립트를 새로 만드는** 동작을 할 수 있습니다 (예: `run-figma-search.ts` 생성).
-- **정리:** 기획/퍼블 조회만 할 때는 **@oke-front-mcp (MCP 서버 참조)** 만 쓰고, **@/.../oke-front-mcp/ (프로젝트 경로)** 는 붙이지 않는 것이 좋습니다. 코드 수정이 목적일 때만 프로젝트 폴더를 컨텍스트에 넣으세요.
+- 주요 태그 예시:
+  - `[mcp요청확인]` MCP 요청 수신
+  - `[mcp도구실행]` Tool 시작/성공/실패
+  - `[figma기획확인]` 기획 검색 전략/결과/학습
+  - `[publisher코드확인]` 퍼블 검색/동기화/결과
 
----
+## 6) 운영 팁
 
-## 6) 운영 가이드
+- 코드 변경 후: `npm run build`
+- Figma 인덱스 갱신: `npm run collect-metadata`
+- Publisher 재인덱싱: tool 호출 시 `refreshIndex=true`
+- Publisher 구조 요약 생성: `npm run build:publisher-taxonomy`
+- 개발요청형 퍼블 질의:
+  - `query`: 예) "호스트 생성페이지를 개발해줘"
+  - `targetSummary`(선택): 예) "contrabass 인스턴스 > 호스트 생성"
+  - `currentCodeHint`(선택): 현재 코드 차이/문제 요약
+  - 참고 규칙:
+    - 동의어 확장 규칙: `data/publisher-synonyms.json` (네트워크/인스턴스/보안그룹/스토리지/파이프라인/모달 등)
+    - 구조 요약: `data/publisher-taxonomy.json`
 
-- 코드 변경 시: `npm run build` 후 Cursor 재시작
-- Figma 기획 대량 변경 시: `npm run collect-metadata`
-- 퍼블 repo 변경 반영:
-  - tool 호출 시 자동 pull 시도
-  - 필요 시 `refreshIndex=true`로 인덱스 재생성
+## 7) Step1~3 QA 실행
 
----
+- QA 앱 경로: `/Users/taeheerho/Desktop/mcp-qa-app`
+- QA 앱 실행:
 
-## 7) 트러블슈팅
+```bash
+cd /Users/taeheerho/Desktop/mcp-qa-app
+npm run dev
+```
 
-### clone/pull 실패
+- MCP 자동 QA 실행:
 
-확인:
-- SSH 키 등록 여부
-- Bitbucket 접근 권한
-- `PUBLISHER_REPO_PATH` fallback 존재 여부
+```bash
+cd /Users/taeheerho/Desktop/oke-front-mcp
+npm run qa:step1-3
+```
 
-### publisher 검색 결과 없음
-
-확인:
-- query를 화면명/기능명으로 더 구체화
-- 프로젝트명을 함께 입력(`콘트라베이스`, `비올라`)
-- `refreshIndex=true`로 재시도
-
-### MCP tool 미노출
-
-확인:
-- `npm run build` 최신 여부
-- Cursor 재시작
-- `mcp.json` 경로/args 확인
-
+- QA 결과 파일:
+  - `data/qa-step1-3-report.json`
+  - `data/qa-step1-3-log-tail.log`

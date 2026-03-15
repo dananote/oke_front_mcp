@@ -14,7 +14,11 @@
     "start": "node dist/index.js",
     "prepare": "npm run build",
     "collect-metadata": "tsx src/scripts/collect-metadata.ts",
-    "sync-mcp-descriptors": "tsx src/scripts/sync-mcp-descriptors.ts"
+    "build:publisher-taxonomy": "tsx src/scripts/build-publisher-taxonomy.ts",
+    "sync-mcp-descriptors": "tsx src/scripts/sync-mcp-descriptors.ts",
+    "sync:cursor": "node scripts/sync-to-cursor.mjs",
+    "build:dev": "npm run build && npm run sync:cursor",
+    "qa:step1-3": "node scripts/qa-step1-3.mjs"
   },
   "keywords": [
     "mcp",

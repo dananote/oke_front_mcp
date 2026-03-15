@@ -1,0 +1,292 @@
+{
+  "generatedAt": "2026-03-15T10:30:44.906Z",
+  "source": {
+    "lastIndexedAt": "2026-03-15T09:49:56.989Z",
+    "gitCommit": "e7e13bebad7ce3a78e2144c37c4d0c93e224e9a0",
+    "totalEntries": 705,
+    "totalViewEntries": 574
+  },
+  "summary": {
+    "bySolution": {
+      "unknown": 109,
+      "bootfactory": 25,
+      "ceph": 98,
+      "contrabass": 189,
+      "viola": 153
+    },
+    "byMenuPath": {
+      "unknown": 4,
+      "root": 9,
+      "componentview": 51,
+      "layouts": 12,
+      "access": 6,
+      "account": 3,
+      "log": 2,
+      "login": 2,
+      "solution": 6,
+      "start": 1,
+      "start/modal": 2,
+      "system": 3,
+      "inventory": 2,
+      "inventory/components": 6,
+      "administrators": 12,
+      "block": 6,
+      "cluster": 12,
+      "exception": 22,
+      "file": 6,
+      "file/components": 10,
+      "file/modal": 3,
+      "monitoring": 18,
+      "monitoring/components": 11,
+      "object": 11,
+      "object/modal": 4,
+      "observability": 3,
+      "observability/components": 2,
+      "catalog": 35,
+      "pipeline": 12,
+      "repository": 12,
+      "ha": 5,
+      "compute": 6,
+      "compute/instancecreate": 5,
+      "compute/instancedetail": 9,
+      "compute/modal": 16,
+      "initial": 13,
+      "management": 27,
+      "monitoring/icon": 5,
+      "monitoring/modal": 3,
+      "orchestration": 3,
+      "storage": 20,
+      "storage/volume": 5,
+      "storage/volume/detail": 5,
+      "vpc": 40,
+      "vpc/components": 7,
+      "vpc/modal": 4,
+      "modal": 2,
+      "setting/cluster": 30,
+      "setting/modal": 5,
+      "setting/security": 14,
+      "workflow/network": 22,
+      "workflow/storage": 1,
+      "workflow/storage/pv": 2,
+      "workflow/storage/pvc": 2,
+      "workflow/storage/storageclass": 2,
+      "workflow/workload": 33
+    },
+    "byEntity": {
+      "unknown": 574
+    },
+    "byPageType": {
+      "unknown": 574
+    },
+    "modalCount": 43
+  },
+  "samples": {
+    "topMenus": [
+      [
+        "componentview",
+        51
+      ],
+      [
+        "vpc",
+        40
+      ],
+      [
+        "catalog",
+        35
+      ],
+      [
+        "workflow/workload",
+        33
+      ],
+      [
+        "setting/cluster",
+        30
+      ],
+      [
+        "management",
+        27
+      ],
+      [
+        "exception",
+        22
+      ],
+      [
+        "workflow/network",
+        22
+      ],
+      [
+        "storage",
+        20
+      ],
+      [
+        "monitoring",
+        18
+      ],
+      [
+        "compute/modal",
+        16
+      ],
+      [
+        "setting/security",
+        14
+      ],
+      [
+        "initial",
+        13
+      ],
+      [
+        "layouts",
+        12
+      ],
+      [
+        "administrators",
+        12
+      ],
+      [
+        "cluster",
+        12
+      ],
+      [
+        "pipeline",
+        12
+      ],
+      [
+        "repository",
+        12
+      ],
+      [
+        "monitoring/components",
+        11
+      ],
+      [
+        "object",
+        11
+      ],
+      [
+        "file/components",
+        10
+      ],
+      [
+        "root",
+        9
+      ],
+      [
+        "compute/instancedetail",
+        9
+      ],
+      [
+        "vpc/components",
+        7
+      ],
+      [
+        "access",
+        6
+      ],
+      [
+        "solution",
+        6
+      ],
+      [
+        "inventory/components",
+        6
+      ],
+      [
+        "block",
+        6
+      ],
+      [
+        "file",
+        6
+      ],
+      [
+        "compute",
+        6
+      ],
+      [
+        "ha",
+        5
+      ],
+      [
+        "compute/instancecreate",
+        5
+      ],
+      [
+        "monitoring/icon",
+        5
+      ],
+      [
+        "storage/volume",
+        5
+      ],
+      [
+        "storage/volume/detail",
+        5
+      ],
+      [
+        "setting/modal",
+        5
+      ],
+      [
+        "unknown",
+        4
+      ],
+      [
+        "object/modal",
+        4
+      ],
+      [
+        "vpc/modal",
+        4
+      ],
+      [
+        "account",
+        3
+      ]
+    ],
+    "modalFiles": [
+      "src/views/publishing-archive/componentView/ViewModal.vue",
+      "src/views/publishing-bootfactory/start/modal/ModalStartScreen.vue",
+      "src/views/publishing-bootfactory/start/modal/index.ts",
+      "src/views/publishing-ceph/exception/ExceptionModal.vue",
+      "src/views/publishing-ceph/file/modal/ModalAuthentication.vue",
+      "src/views/publishing-ceph/file/modal/ModalCommand.vue",
+      "src/views/publishing-ceph/file/modal/index.ts",
+      "src/views/publishing-ceph/object/modal/ModalMultizoneCompose.vue",
+      "src/views/publishing-ceph/object/modal/ModalS3Key.vue",
+      "src/views/publishing-ceph/object/modal/ModalSwiftKey.vue",
+      "src/views/publishing-ceph/object/modal/index.ts",
+      "src/views/publishing-contrabass/compute/modal/AutoSnapshotCreationModal.vue",
+      "src/views/publishing-contrabass/compute/modal/DescriptionSettingModal.vue",
+      "src/views/publishing-contrabass/compute/modal/DynamicIPLinkingModal.vue",
+      "src/views/publishing-contrabass/compute/modal/FixedIpAddModal.vue",
+      "src/views/publishing-contrabass/compute/modal/InstanceEditModal.vue",
+      "src/views/publishing-contrabass/compute/modal/InstanceFormModal.vue",
+      "src/views/publishing-contrabass/compute/modal/InstanceMigrationModal.vue",
+      "src/views/publishing-contrabass/compute/modal/InstanceSpecChangeModal.vue",
+      "src/views/publishing-contrabass/compute/modal/InstanceTypeSettingModal.vue",
+      "src/views/publishing-contrabass/compute/modal/InstanceVolumeModal.vue",
+      "src/views/publishing-contrabass/compute/modal/KeypairSettingModal.vue",
+      "src/views/publishing-contrabass/compute/modal/LocationSettingModal.vue",
+      "src/views/publishing-contrabass/compute/modal/NameSettingModal.vue",
+      "src/views/publishing-contrabass/compute/modal/SecurityGroupSettingModal.vue",
+      "src/views/publishing-contrabass/compute/modal/VolumeSettingModal.vue",
+      "src/views/publishing-contrabass/compute/modal/index.ts",
+      "src/views/publishing-contrabass/exception/ExceptionModal.vue",
+      "src/views/publishing-contrabass/monitoring/modal/ModalSelectNetwork.vue",
+      "src/views/publishing-contrabass/vpc/modal/InstanceSourceSettingModal.vue",
+      "src/views/publishing-contrabass/vpc/modal/InstanceTypeSettingModal.vue",
+      "src/views/publishing-contrabass/vpc/modal/PhysicalLocationSettingModal.vue",
+      "src/views/publishing-contrabass/vpc/modal/index.ts",
+      "src/views/publishing-viola/exception/ExceptionModal.vue",
+      "src/views/publishing-viola/modal/ModalIstioInjection.vue",
+      "src/views/publishing-viola/modal/index.ts",
+      "src/views/publishing-viola/monitoring/modal/ModalGpuSetting.vue",
+      "src/views/publishing-viola/monitoring/modal/index.ts",
+      "src/views/publishing-viola/setting/modal/ModalDeployRollback.vue",
+      "src/views/publishing-viola/setting/modal/ModalEngineUpgrade.vue",
+      "src/views/publishing-viola/setting/modal/ModalLabelSetting.vue",
+      "src/views/publishing-viola/setting/modal/ModalNodeScaling.vue",
+      "src/views/publishing-viola/setting/modal/index.ts"
+    ]
+  }
+}

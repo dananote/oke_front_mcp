@@ -22,7 +22,7 @@ import { PublisherService } from './services/publisher.js';
 import { SearchService } from './services/search.js';
 import { searchFigmaSpecTool } from './tools/search-figma-spec.js';
 import { searchPublisherCodeTool } from './tools/search-publisher-code.js';
-import { logMcpRequest } from './utils/mcp-request-logger.js';
+import { logMcpRequest, logToolTrace } from './utils/mcp-request-logger.js';
 import { MCP_TOOLS_SCHEMA } from './mcp-tools-schema.js';
 
 // 환경변수 로드
@@ -33,7 +33,11 @@ function buildToolsList(): { name: string; description: string; inputSchema: obj
   const defaultProject = process.env.DEFAULT_PROJECT || 'CONTRABASS';
   return MCP_TOOLS_SCHEMA.map((t) => {
     const inputSchema = JSON.parse(JSON.stringify(t.inputSchema)) as typeof t.inputSchema;
-    if (inputSchema.properties?.project && typeof inputSchema.properties.project === 'object') {
+    if (
+      t.name === 'search_figma_spec' &&
+      inputSchema.properties?.project &&
+      typeof inputSchema.properties.project === 'object'
+    ) {
       inputSchema.properties.project = { ...inputSchema.properties.project, default: defaultProject };
     }
     return { name: t.name, description: t.description, inputSchema };
@@ -81,28 +85,52 @@ class OkeFrontMCPServer {
   private setupHandlers(): void {
     // Tools 목록 제공 (단일 소스: mcp-tools-schema.ts)
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      logMcpRequest('ListToolsRequestSchema (tools/list)', 'Cursor가 도구 목록 요청');
-      return { tools: buildToolsList() };
+      const tools = buildToolsList();
+      logMcpRequest('ListToolsRequestSchema (tools/list)', 'Cursor가 도구 목록 요청', {
+        toolNames: tools.map((tool) => tool.name),
+      });
+      return { tools };
     });
 
     // Tool 실행
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
       logMcpRequest('CallToolRequestSchema (tools/call)', `Cursor가 도구 실행 요청 → name="${name}"`, { name, arguments: args });
+      const requestId = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+      const startedAt = Date.now();
+      logToolTrace({
+        requestId,
+        tool: name,
+        event: 'tool_call_start',
+        args,
+      });
 
       try {
+        let result: any;
         switch (name) {
           case 'search_figma_spec':
-            return await searchFigmaSpecTool(this.figmaService, this.searchService, args);
+            result = await searchFigmaSpecTool(this.figmaService, this.searchService, args);
+            break;
           case 'search_publisher_code':
-            return await searchPublisherCodeTool(this.publisherService, args);
+            result = await searchPublisherCodeTool(this.publisherService, args);
+            break;
           
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
+
+        logToolTrace({
+          requestId,
+          tool: name,
+          event: 'tool_call_success',
+          args,
+          result,
+          durationMs: Date.now() - startedAt,
+        });
+        return result;
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        return {
+        const errorResponse = {
           content: [
             {
               type: 'text',
@@ -111,6 +139,16 @@ class OkeFrontMCPServer {
           ],
           isError: true,
         };
+        logToolTrace({
+          requestId,
+          tool: name,
+          event: 'tool_call_error',
+          args,
+          result: errorResponse,
+          durationMs: Date.now() - startedAt,
+          error: errorMessage,
+        });
+        return errorResponse;
       }
     });
 
@@ -142,13 +180,13 @@ class OkeFrontMCPServer {
 
       if (uri === 'figma://screens') {
         try {
-          const stats = await this.searchService.getStats();
+          const screens = await this.searchService.getScreenList();
           return {
             contents: [
               {
                 uri,
                 mimeType: 'application/json',
-                text: JSON.stringify(stats, null, 2),
+                text: JSON.stringify(screens, null, 2),
               },
             ],
           };

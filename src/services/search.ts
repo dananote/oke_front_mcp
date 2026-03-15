@@ -337,6 +337,63 @@ export class SearchService {
   }
 
   /**
+   * 리소스 제공용 화면 목록
+   */
+  async getScreenList(
+    maxItems: number = 2000,
+  ): Promise<Array<{
+    project: string;
+    version: string;
+    screenId: string;
+    pageTitle: string;
+    fileKey: string;
+    nodeId: string;
+    lastModified: string;
+  }>> {
+    if (!this.index) {
+      await this.loadIndex();
+    }
+
+    if (!this.index) {
+      return [];
+    }
+
+    const screens: Array<{
+      project: string;
+      version: string;
+      screenId: string;
+      pageTitle: string;
+      fileKey: string;
+      nodeId: string;
+      lastModified: string;
+    }> = [];
+
+    for (const [projectName, projectData] of Object.entries(this.index.projects)) {
+      for (const [versionName, versionData] of Object.entries(projectData.versions)) {
+        for (const screen of versionData.screens) {
+          screens.push({
+            project: projectName,
+            version: versionName,
+            screenId: screen.screenId,
+            pageTitle: screen.pageTitle,
+            fileKey: screen.fileKey,
+            nodeId: screen.nodeId,
+            lastModified: screen.lastModified,
+          });
+        }
+      }
+    }
+
+    screens.sort((a, b) => {
+      if (a.project !== b.project) return a.project.localeCompare(b.project);
+      if (a.version !== b.version) return a.version.localeCompare(b.version);
+      return a.screenId.localeCompare(b.screenId);
+    });
+
+    return screens.slice(0, Math.max(1, maxItems));
+  }
+
+  /**
    * 새로운 화면을 metadata에 추가 (학습)
    */
   async addScreen(screen: ScreenMetadata): Promise<void> {

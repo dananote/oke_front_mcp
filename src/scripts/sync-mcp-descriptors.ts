@@ -14,6 +14,31 @@ import { MCP_TOOLS_SCHEMA } from '../mcp-tools-schema.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../..');
 const outDir = path.join(repoRoot, 'mcp-descriptors');
+const requiredDescriptors = ['search_figma_spec', 'search_publisher_code'];
+
+function verifyGeneratedDescriptors(): void {
+  for (const toolName of requiredDescriptors) {
+    const descriptorPath = path.join(outDir, `${toolName}.json`);
+    if (!fs.existsSync(descriptorPath)) {
+      throw new Error(`필수 디스크립터 누락: ${descriptorPath}`);
+    }
+  }
+}
+
+function copyDescriptorsToCursorIfConfigured(): void {
+  const targetDir = process.env.CURSOR_MCP_TOOLS_DIR?.trim();
+  if (!targetDir) {
+    return;
+  }
+
+  fs.mkdirSync(targetDir, { recursive: true });
+  for (const toolName of requiredDescriptors) {
+    const src = path.join(outDir, `${toolName}.json`);
+    const dest = path.join(targetDir, `${toolName}.json`);
+    fs.copyFileSync(src, dest);
+  }
+  console.log(`Cursor tools 경로에 동기화 완료: ${targetDir}`);
+}
 
 function main() {
   fs.mkdirSync(outDir, { recursive: true });
@@ -28,6 +53,9 @@ function main() {
     fs.writeFileSync(filePath, JSON.stringify(descriptor, null, 2), 'utf-8');
     console.log(`  ✓ ${tool.name}.json`);
   }
+
+  verifyGeneratedDescriptors();
+  copyDescriptorsToCursorIfConfigured();
 
   console.log('');
   console.log(`mcp-descriptors/ 에 디스크립터를 생성했습니다.`);
